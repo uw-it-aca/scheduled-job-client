@@ -24,8 +24,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'Django>=1.10,<1.11',
-        'django-aws-message>=1.0,<2.0',
-        'unittest2',
+        'boto3',
     ],
     license='Apache License, Version 2.0',
     description=('App to provide support for scheduled-job-manager'),

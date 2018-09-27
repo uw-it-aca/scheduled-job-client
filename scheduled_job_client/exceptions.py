@@ -1,6 +1,7 @@
 """ Scheduled Job Client exceptions
 """
 
+
 class InvalidJobConfig(Exception):
     pass
 
