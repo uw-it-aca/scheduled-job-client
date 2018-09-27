@@ -45,4 +45,8 @@ def confirm_subscription(topic_arn, token):
             AuthenticateOnUnsubscribe='true'
         )
     except Exception as ex:
-        logger.exception('SNS confirm subscription: {0}'.format(ex))
+        if (type(ex).__name__ == 'AuthorizationErrorException' and
+                'already confirmed' in '{0}'.format(ex)):
+            logger.info('SNS subscription already confirmed')
+        else:
+            logger.exception('SNS confirm subscription: {0}'.format(ex))
