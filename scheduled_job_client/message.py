@@ -1,8 +1,8 @@
 from scheduled_job_client import get_job_config
 from scheduled_job_client.exceptions import (
     InvalidJobRequest, ScheduleJobClientNoOp)
-from aws_message.message import validate_message_body, extract_inner_message
 from aws_message.message import SNSException
+from aws_message.message import extract_inner_message
 
 
 def get_job_message(mbody):
@@ -11,7 +11,6 @@ def get_job_message(mbody):
 
     try:
         job_config = get_job_config()
-        validate_message_body(mbody)
         job_message = extract_inner_message(mbody)
     except SNSException as ex:
         raise InvalidJobRequest('Invalid SNS Message: {0}'.format(ex))
