@@ -8,31 +8,35 @@ def register_job_client():
     """
     config = get_job_config()
     job_client_update('register', {
-        'job_list': config['JOBS'].keys()
+        'JobList': config['JOBS'].keys()
     })
 
 
 def report_job_start(job):
-    job_client_update('start', {
-        'job_label': job.job_label,
-        'job_id': job.job_id,
-        'start_date': job.start_date
+    job_client_update('launch', {
+        'JobLabel': job.job_label,
+        'JobId': job.job_id,
+        'StartDate': job.start_date
     })
 
 
 def report_job_finish(job):
-    job_client_update('finish', {
-        'job_label': job.job_label,
-        'job_id': job.job_id,
-        'end_date': job.end_date,
-        'exit_status': job.exit_status,
-        'exit_output': job.exit_output
+    job_client_update('exit', {
+        'JobLabel': job.job_label,
+        'JobId': job.job_id,
+        'EndDate': job.end_date,
+        'ExitStatus': job.exit_status,
+        'ExitOutput': job.exit_output
     })
 
 
 def update_job_progress(job):
     job_client_update('progress', {
-        'job_label': job.job_label,
-        'job_id': job.job_id,
-        'progress': job.progress
+        'JobLabel': job.job_label,
+        'JobId': job.job_id,
+        'Progress': job.progress
     })
+
+
+def update_job_ping(job):
+    job_client_update('ping', {})

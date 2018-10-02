@@ -8,33 +8,32 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def job_client_update(message_type, json_data):
+def job_client_update(message_action, json_data):
     """Send messages to the Scheduled Job Manager response queue
     """
     config = get_job_config()
     sqs = boto3.client('sqs',
                        aws_access_key_id=config.get('KEY_ID'),
                        aws_secret_access_key=config.get('KEY'))
-
-    json_data['ClusterMember'] = {
-        'ClusterName': config.get('CLUSTER_NAME'),
-        'ClusterMemberName': config.get('CLUSTER_MEMBER'),
+    message = {
+        'Message': {
+            'Cluster': {
+                'ClusterName': config.get('CLUSTER_NAME'),
+                'ClusterMemberName': config.get('CLUSTER_MEMBER'),
+            },
+            'Action': message_action,
+            'Data': json_data
+        }
     }
 
-    logger.debug('SQS send: {0}'.format(json_data))
+    logger.debug('SQS send: {0}'.format(message))
 
     response = sqs.send_message(
         QueueUrl=config.get('STATUS').get('QUEUE_URL'),
-        MessageAttributes={
-            'JobMessageType': {
-                'StringValue': message_type,
-                'DataType': 'String'
-            }
-        },
         MessageDeduplicationId='ScheduledJobManager{0}'.format(
             randint(1000000000, 9999999999)),
         MessageGroupId='ScheduledJobManager',
-        MessageBody=json.dumps(json_data)
+        MessageBody=json.dumps(message)
     )
 
     logger.debug('SQS response: {0}'.format(response))
