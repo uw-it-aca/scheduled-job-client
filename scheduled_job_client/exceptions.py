@@ -14,5 +14,9 @@ class InvalidSubcriptionTopicArn(Exception):
     pass
 
 
+class UnkownJobException(Exception):
+    pass
+
+
 class ScheduleJobClientNoOp(Exception):
     pass

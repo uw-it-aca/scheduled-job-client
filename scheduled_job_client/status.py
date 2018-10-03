@@ -13,30 +13,23 @@ def register_job_client():
 
 
 def report_job_start(job):
-    job_client_update('launch', {
-        'JobLabel': job.job_label,
-        'JobId': job.job_id,
-        'StartDate': job.start_date
-    })
+    job_client_update('launch', job.json_data())
 
 
 def report_job_finish(job):
-    job_client_update('exit', {
-        'JobLabel': job.job_label,
-        'JobId': job.job_id,
-        'EndDate': job.end_date,
-        'ExitStatus': job.exit_status,
-        'ExitOutput': job.exit_output
-    })
+    job_client_update('exit', job.json_data())
 
 
 def update_job_progress(job):
-    job_client_update('progress', {
-        'JobLabel': job.job_label,
-        'JobId': job.job_id,
-        'Progress': job.progress
+    job_client_update('progress', job.json_data())
+
+
+def invalid_job_error(cause, label):
+    job_client_update('error', {
+        'Cause': cause,
+        'Data': label
     })
 
 
-def update_job_ping(job):
+def update_job_ping():
     job_client_update('ping', {})
