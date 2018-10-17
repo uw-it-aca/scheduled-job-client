@@ -23,7 +23,6 @@ setup(
     author_email="aca-it@uw.edu",
     include_package_data=True,
     install_requires=[
-        'Django>=1.10,<1.11',
         'django-aws-message>=1.0.1,<1.1',
         'boto3',
     ],

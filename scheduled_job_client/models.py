@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
+from scheduled_job_client.notification import (
+    notify_job_start, notify_job_finish)
+from scheduled_job_client.job import start_background_job
 from django.db import models
 from django.utils.timezone import localtime
+import threading
 
 # Models support local scheduled job instance
 
@@ -19,7 +22,11 @@ class ScheduledJob(models.Model):
     exit_status = models.SmallIntegerField(null=True)
     exit_output = models.CharField(max_length=512, null=True)
 
-    # should job table include logged data?  pointer/reference to log file?
+    # BUG should job table include logged data?  pointer/reference to log file?
+
+    def launch(self):
+        threading.Thread(target=start_background_job, args=(self)).start()
+        notify_job_start(self.json_data())
 
     def json_data(self):
         return {

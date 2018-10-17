@@ -6,9 +6,8 @@ from logging import getLogger
 from scheduled_job_client.models import ScheduledJob
 from scheduled_job_client.message import get_control_message
 from scheduled_job_client.dao.sns import confirm_subscription
-from scheduled_job_client.status import (
-    report_job_start, update_job_progress,
-    invalid_job_error, register_job_client)
+from scheduled_job_client.notification import (
+    invalid_job_error, register_job_client, report_job_status)
 from scheduled_job_client.exceptions import (
     InvalidJobRequest, InvalidJobConfig,
     ScheduleJobClientNoOp, UnkownJobException)
@@ -37,7 +36,7 @@ class JobClient(View):
                 _dispatch_on_control_message(action, data)
         except InvalidJobConfig as ex:
             logger.info('Invalid Job Config: {0}'.format(ex))
-            ### publish to the response queue
+            invalid_job_error('invalid_job_configuration', '{}'.format(ex))
         except InvalidJobRequest as ex:
             logger.info('Invalid Job Request: {0}'.format(ex))
             invalid_job_error('invalid_job_request', '{}'.format(ex))
@@ -56,6 +55,11 @@ def _dispatch_on_control_message(action, data):
     """Dispatch on control message type
     """
     if action == 'status':
+        json_data = {}
+        for job in ScheduledJob.objects.all():
+            json_data[job.job_id] = job.json_data()
+
+        report_job_status({'Jobs': json_data})
         register_job_client()
     else:
         try:
@@ -65,22 +69,19 @@ def _dispatch_on_control_message(action, data):
                 job, created = ScheduledJob.objects.get_or_create(
                     job_id=job_id, job_label=job_label)
 
-                    # # # # # # # # # # # # # # # # # # # # # # #
-                    #
-                    # do stuff to launch task
-                    #
-                    # # # # # # # # # # # # # # # # # # # # # # #
+                if created:
+                    job.launch()
 
-                if True or created:
-                    report_job_start(job)
-                # else:
-                #     redundant message, fall through silently
-            elif action == 'progress':
+                job.report_start()
+            elif action == 'terminate':
                 try:
-                    update_job_progress(
-                        ScheduledJob.objects.get(
-                            job_id=job_id).json_data())
+                    ScheduledJob.objects.get(
+                        job_id=job_id).report_progress()
+
+                    # do something to terminate job
+
                 except ScheduledJob.DoesNotExist:
-                    raise Exception('dammit')
+                    raise InvalidJobRequest(
+                        'Kill unknown job - {}'.format(job_id))
         except KeyError:
             raise InvalidJobRequest('Missing Data Fields')

@@ -12,16 +12,18 @@ def register_job_client():
     })
 
 
-def report_job_start(job):
-    job_client_update('launch', job.json_data())
+def notify_job_start(json_data):
+    job_client_update('launch', json_data)
 
 
-def report_job_finish(job):
-    job_client_update('exit', job.json_data())
+def notify_job_finish(json_data):
+    job_client_update('exit', json_data)
 
 
-def update_job_progress(job):
-    job_client_update('progress', job.json_data())
+def report_job_status(json_data):
+    """Report current state of all known jobs
+    """
+    job_client_update('status', json_data)
 
 
 def invalid_job_error(cause, label):
@@ -29,7 +31,3 @@ def invalid_job_error(cause, label):
         'Cause': cause,
         'Data': label
     })
-
-
-def update_job_ping():
-    job_client_update('ping', {})
