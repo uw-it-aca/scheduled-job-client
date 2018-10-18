@@ -1,5 +1,5 @@
 from scheduled_job_client.dao.sns import register_job_client_endpoint
-from scheduled_job_client.status import register_job_client
+from scheduled_job_client.notification import register_job_client
 from scheduled_job_client.exceptions import InvalidJobConfig
 from logging import getLogger
 

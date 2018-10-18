@@ -8,7 +8,7 @@ def register_job_client():
     """
     config = get_job_config()
     job_client_update('register', {
-        'JobList': config['JOBS'].keys()
+        'JobList': list(config['JOBS'])
     })
 
 
