@@ -20,7 +20,7 @@ def notify_job_finish(json_data):
     job_client_update('exit', json_data)
 
 
-def report_job_status(json_data):
+def notify_job_status(json_data):
     """Report current state of all known jobs
     """
     job_client_update('status', json_data)

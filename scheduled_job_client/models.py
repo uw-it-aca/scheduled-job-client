@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from scheduled_job_client.notification import (
-    notify_job_start, notify_job_finish)
+    notify_job_start, notify_job_status)
 from scheduled_job_client.job import start_background_job
 from django.db import models
 from django.utils.timezone import localtime
 import threading
+import os
 
 # Models support local scheduled job instance
 
@@ -25,19 +26,30 @@ class ScheduledJob(models.Model):
     # BUG should job table include logged data?  pointer/reference to log file?
 
     def launch(self):
+        if self.pid:
+            try:
+                os.kill(self.pid, 0)
+            except OSError:
+                self.pid = None
+
         if self.pid is None:
             threading.Thread(
                 target=start_background_job, args=(self,), daemon=True).start()
             self.report_start()
-        # else already running
-        # BUG verify?
+
+    def save(self, *args, **kwargs):
+        notify_job_status({'Jobs': {self.job_id: self.json_data()}})
+        super(ScheduledJob, self).save(*args, **kwargs)
+
+    def _save(self, *args, **kwargs):
+        super(ScheduledJob, self).save(*args, **kwargs)
 
     def reset(self):
         self.end_date = None
         self.progress = None
         self.exit_status = None
         self.exit_output = None
-        self.save()
+        self._save()
 
     def report_start(self):
         notify_job_start(self.json_data())

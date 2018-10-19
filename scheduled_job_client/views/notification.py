@@ -7,7 +7,7 @@ from scheduled_job_client.models import ScheduledJob
 from scheduled_job_client.message import get_control_message
 from scheduled_job_client.dao.sns import confirm_subscription
 from scheduled_job_client.notification import (
-    invalid_job_error, register_job_client, report_job_status)
+    invalid_job_error, register_job_client, notify_job_status)
 from scheduled_job_client.exceptions import (
     InvalidJobRequest, InvalidJobConfig,
     ScheduleJobClientNoOp, UnkownJobException)
@@ -66,7 +66,7 @@ def _dispatch_on_control_message(action, data):
             json_data[job.job_id] = job.json_data()
 
         logger.info('status reponse: {}'.format(json_data))
-        report_job_status({'Jobs': json_data})
+        notify_job_status({'Jobs': json_data})
         register_job_client()
     else:
         try:

@@ -67,6 +67,7 @@ def start_background_job(job):
 
         job.pid = None
         job.end_date = datetime.now()
+        job.progress = 100
         job.exit_status = proc.returncode
         if job.exit_status != 0:
             job.exit_output = output
