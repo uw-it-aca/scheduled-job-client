@@ -25,7 +25,21 @@ class ScheduledJob(models.Model):
     # BUG should job table include logged data?  pointer/reference to log file?
 
     def launch(self):
-        threading.Thread(target=start_background_job, args=(self)).start()
+        if self.pid is None:
+            threading.Thread(
+                target=start_background_job, args=(self,), daemon=True).start()
+            self.report_start()
+        # else already running
+        # BUG verify?
+
+    def reset(self):
+        self.end_date = None
+        self.progress = None
+        self.exit_status = None
+        self.exit_output = None
+        self.save()
+
+    def report_start(self):
         notify_job_start(self.json_data())
 
     def json_data(self):
@@ -38,5 +52,5 @@ class ScheduledJob(models.Model):
                 self.end_date is not None) else None,
             'Progress': self.progress,
             'ExitStatus': self.exit_status,
-            'ExitOutpot': self.exit_output
+            'ExitOutput': self.exit_output
         }

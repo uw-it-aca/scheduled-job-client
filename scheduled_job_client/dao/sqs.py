@@ -17,6 +17,7 @@ def job_client_update(message_action, json_data):
                        aws_secret_access_key=config.get('KEY'))
     message = {
         'Message': {
+            'Type': 'ScheduledJobMessage',
             'Cluster': {
                 'ClusterName': config.get('CLUSTER_NAME'),
                 'ClusterMemberName': config.get('CLUSTER_MEMBER'),

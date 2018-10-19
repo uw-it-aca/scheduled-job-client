@@ -16,7 +16,7 @@ def register_job_client_endpoint():
         config.get('NOTIFICATION').get('ENDPOINT_BASE'),
         reverse('notification'))
 
-    logger.debug('SNS: subscribe endpoint {0} to {1}'.format(
+    logger.info('SNS: subscribe endpoint {0} to {1}'.format(
         endpoint, config.get('NOTIFICATION').get('TOPIC_ARN')))
     client = boto3.client('sns',
                           aws_access_key_id=config.get('KEY_ID'),
@@ -35,7 +35,7 @@ def confirm_subscription(topic_arn, token):
     if topic_arn != config.get('NOTIFICATION').get('TOPIC_ARN'):
         raise InvalidSubcriptionTopicArn(topic_arn)
 
-    logger.debug('SNS confirm subscription token {0}'.format(token))
+    logger.info('SNS confirm subscription token {0}'.format(token))
     try:
         client = boto3.client('sns',
                               aws_access_key_id=config.get('KEY_ID'),

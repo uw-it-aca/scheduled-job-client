@@ -33,17 +33,21 @@ class JobClient(View):
                 confirm_subscription(mbody['TopicArn'], mbody['Token'])
             else:
                 action, data = get_control_message(mbody)
+
+                logger.info('job request: action: {}, data: {}'.format(
+                    action, data))
+
                 _dispatch_on_control_message(action, data)
         except InvalidJobConfig as ex:
-            logger.info('Invalid Job Config: {0}'.format(ex))
+            logger.error('Invalid Job Config: {0}'.format(ex))
             invalid_job_error('invalid_job_configuration', '{}'.format(ex))
         except InvalidJobRequest as ex:
-            logger.info('Invalid Job Request: {0}'.format(ex))
+            logger.error('Invalid Job Request: {0}'.format(ex))
             invalid_job_error('invalid_job_request', '{}'.format(ex))
         except ScheduleJobClientNoOp as ex:
             pass
         except UnkownJobException as ex:
-            logger.info('Invalid Job Label: {0}'.format(ex))
+            logger.error('Invalid Job Label: {0}'.format(ex))
             invalid_job_error('invalid_job_label', '{}'.format(ex))
         except Exception as ex:
             logger.exception('JobClient.post: {0}'.format(ex))
@@ -56,20 +60,32 @@ def _dispatch_on_control_message(action, data):
     """
     if action == 'status':
         json_data = {}
+        logger.debug('status check: checking jobs')
         for job in ScheduledJob.objects.all():
+            logger.debug('status check: adding job {}'.format(job.job_id))
             json_data[job.job_id] = job.json_data()
 
+        logger.info('status reponse: {}'.format(json_data))
         report_job_status({'Jobs': json_data})
         register_job_client()
     else:
         try:
             job_id = data['job_id']
             job_label = data['task']['label']
+            logger.debug('dispatch: job id: {}, job_label: {}'.format(
+                job_id, job_label))
             if action == 'launch':
                 job, created = ScheduledJob.objects.get_or_create(
                     job_id=job_id, job_label=job_label)
 
+                logger.info('launch - job id: {}, created: {}'.format(
+                    job.job_id, created))
+
+                # if new job or restarting previous job
                 if created:
+                    job.launch()
+                elif job.exit_status is not None:
+                    job.reset()
                     job.launch()
 
                 job.report_start()
