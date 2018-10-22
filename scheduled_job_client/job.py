@@ -35,6 +35,7 @@ def start_background_job(job):
             output = ''
             proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
             job.pid = proc.pid
+            job.start_date = datetime.now()
             job.save()
 
             logger.info(
