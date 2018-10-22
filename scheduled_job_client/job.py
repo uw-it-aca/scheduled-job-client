@@ -32,16 +32,20 @@ def start_background_job(job):
             return
 
         try:
-            output = ''
             proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
             job.pid = proc.pid
             job.start_date = datetime.now()
+            job.progress = 0
+            job.end_date = None
+            job.exit_status = None
+            job.exit_output = None
             job.save()
 
             logger.info(
                 'background job - pid: {}, type: {}, command: {}'.format(
                     proc.pid, job_type, command))
 
+            output = ''
             while True:
                 line = proc.stdout.readline().decode('utf-8').strip()
                 logger.debug('background job read: {}'.format(line))
@@ -53,7 +57,7 @@ def start_background_job(job):
                         job.progress = int(line)
                         job.save()
                     else:
-                        output += '{}'.format(line)
+                        output += '{}\n'.format(line)
 
             logger.info(
                 'background job finish - pid: {}, returncode: {}'.format(
@@ -70,8 +74,7 @@ def start_background_job(job):
         job.end_date = datetime.now()
         job.progress = 100
         job.exit_status = proc.returncode
-        if job.exit_status != 0:
-            job.exit_output = output
+        job.exit_output = output
         job.save()
     except KeyError:
         _job_error(job, 'Broken job config for {}'.format(job.job_label))

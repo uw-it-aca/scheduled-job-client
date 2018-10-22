@@ -9,3 +9,4 @@ def test_me():
         print('{}'.format((i * 10) + random.randint(1, 10)))
         sys.stdout.flush()
         time.sleep(10)
+    print('fini')

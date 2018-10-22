@@ -13,6 +13,7 @@ from scheduled_job_client.exceptions import (
     ScheduleJobClientNoOp, UnkownJobException)
 from aws_message.message import validate_message_body
 import json
+import os
 
 
 logger = getLogger(__name__)
@@ -83,9 +84,19 @@ def _dispatch_on_control_message(action, data):
 
                 # if new job or restarting previous job
                 if created:
+                    # fresh job
                     job.launch()
                 elif job.exit_status is not None:
-                    job.reset()
+                    # finished job
+                    job.launch()
+                elif job.pid is not None:
+                    # verify that it's running
+                    try:
+                        os.kill(job.pid, 0)
+                        return
+                    except OSError:
+                        job.pid = None
+
                     job.launch()
 
                 job.report_start()
