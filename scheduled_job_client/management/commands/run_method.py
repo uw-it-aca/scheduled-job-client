@@ -13,6 +13,8 @@ class Command(BaseCommand):
         parser.add_argument(
             'module_and_method',
             help='module.method to execute')
+        parser.add_argument(
+            'arguments', nargs='*', default=[])
 
     def handle(self, *args, **options):
         try:
@@ -20,6 +22,6 @@ class Command(BaseCommand):
                 'module_and_method'].rsplit('.', 1)
             module = importlib.import_module(module_name)
             job_method = getattr(module, method_name)
-            job_method()
+            job_method(*options['arguments'])
         except Exception as ex:
             logger.exception('run_method: {0}'.format(ex))

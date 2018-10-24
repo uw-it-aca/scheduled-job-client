@@ -4,9 +4,13 @@ import random
 import sys
 
 
-def test_me():
-    for i in range(0, 10):
-        print('{}'.format((i * 10) + random.randint(1, 10)))
+def test_me(count=10, span=10):
+    count = int(count)
+    chunk = int(round(100/count))
+    progress = 1
+    for i in range(0, count):
+        progress = random.randint(i * chunk, (i + 1) * chunk)
+        print('{}'.format(progress))
         sys.stdout.flush()
-        time.sleep(10)
+        time.sleep(int(span))
     print('fini')

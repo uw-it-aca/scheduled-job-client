@@ -9,5 +9,8 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Prod cluster members to report status"
 
+    def add_arguments(self, parser):
+        parser.add_argument('arguments', nargs='*')
+
     def handle(self, *args, **options):
-        test_me()
+        test_me(*options['arguments'])

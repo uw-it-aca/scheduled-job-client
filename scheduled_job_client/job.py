@@ -16,59 +16,56 @@ def start_background_job(job):
         job_config = get_job_config()['JOBS'][job.job_label]
         job_type = job_config['type']
         job_action = job_config['action']
-
-        logger.debug(
-            'background job: type: {}, action: {}, conf: {}'.format(
-                job_type, job_action, job_config))
+        job_args = ' '.join(map(lambda i: '{}'.format(i),
+                                job_config.get('arguments', [])))
 
         if job_type == 'method':
-            command = 'python manage.py run_method {}'.format(job_action)
+            command = 'python manage.py run_method {} {}'.format(
+                job_action, job_args)
         elif job_type == 'management_command':
-            command = 'python manage.py {}'.format(job_action)
+            command = 'python manage.py {} {}'.format(
+                job_action, job_args)
         elif job_type == 'shell':
-            command = job_action
+            command = '{} {}'.format(job_action, job_args)
         else:
-            _job_error(job, 'Unknown job type for {}'.format(job.job_label))
+            _job_error(job, 'Unknown job type for {} {}'.format(
+                job.job_label, job_args))
             return
 
-        try:
-            proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
-            job.pid = proc.pid
-            job.start_date = datetime.now()
-            job.progress = 0
-            job.end_date = None
-            job.exit_status = None
-            job.exit_output = None
-            job.save()
+        logger.info(
+            'background job: type: {}, command: {}, conf: {}'.format(
+                job_type, command, job_config))
 
-            logger.info(
-                'background job - pid: {}, type: {}, command: {}'.format(
-                    proc.pid, job_type, command))
+        proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+        job.pid = proc.pid
+        job.start_date = datetime.now()
+        job.progress = 0
+        job.end_date = None
+        job.exit_status = None
+        job.exit_output = None
+        job.save()
 
-            output = ''
-            while True:
-                line = proc.stdout.readline().decode('utf-8').strip()
-                logger.debug('background job read: {}'.format(line))
-                if line == '':
-                    if proc.poll() is not None:
-                        break
+        logger.info(
+            'background job - pid: {}, type: {}, command: {}'.format(
+                proc.pid, job_type, command))
+
+        output = ''
+        while True:
+            line = proc.stdout.readline().decode('utf-8').strip()
+            logger.debug('background job read: {}'.format(line))
+            if line == '':
+                if proc.poll() is not None:
+                    break
+            else:
+                if re.match(r'^\d+$', line):
+                    job.progress = int(line)
+                    job.save()
                 else:
-                    if re.match(r'^\d+$', line):
-                        job.progress = int(line)
-                        job.save()
-                    else:
-                        output += '{}\n'.format(line)
+                    output += '{}\n'.format(line)
 
-            logger.info(
-                'background job finish - pid: {}, returncode: {}'.format(
-                    proc.pid, proc.returncode))
-        except Exception as ex:
-            job.pid = None
-            job.exit_status = -1
-            job.exit_output = traceback.format_exc()
-            job.save()
-            logger.exception('background job: {}'.format(ex))
-            return
+        logger.info(
+            'background job finish - pid: {}, returncode: {}'.format(
+                proc.pid, proc.returncode))
 
         job.pid = None
         job.end_date = datetime.now()
@@ -78,6 +75,12 @@ def start_background_job(job):
         job.save()
     except KeyError:
         _job_error(job, 'Broken job config for {}'.format(job.job_label))
+    except Exception as ex:
+        job.pid = None
+        job.exit_status = -1
+        job.exit_output = traceback.format_exc()
+        job.save()
+        logger.exception('background job: {}'.format(ex))
 
 
 def _job_error(job, reason):
