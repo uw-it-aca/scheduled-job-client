@@ -8,7 +8,7 @@ def register_job_client():
     """
     config = get_job_config()
     job_client_update('register', {
-        'JobList': list(config['JOBS'])
+        'job_list': list(config['JOBS'])
     })
 
 
@@ -28,6 +28,6 @@ def notify_job_status(json_data):
 
 def invalid_job_error(cause, label):
     job_client_update('error', {
-        'Cause': cause,
-        'Data': label
+        'cause': cause,
+        'data': label
     })

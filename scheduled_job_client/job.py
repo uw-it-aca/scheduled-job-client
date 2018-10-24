@@ -2,6 +2,7 @@
 from scheduled_job_client import get_job_config
 from datetime import datetime
 from subprocess import Popen, PIPE
+import select
 import logging
 import traceback
 import re
@@ -50,18 +51,25 @@ def start_background_job(job):
                 proc.pid, job_type, command))
 
         output = ''
+        stdout = proc.stdout.fileno()
+        stderr = proc.stderr.fileno()
         while True:
-            line = proc.stdout.readline().decode('utf-8').strip()
-            logger.debug('background job read: {}'.format(line))
-            if line == '':
-                if proc.poll() is not None:
-                    break
-            else:
-                if re.match(r'^\d+$', line):
-                    job.progress = int(line)
-                    job.save()
-                else:
+            r, w, e = select.select([stdout, stderr], [], [])
+            for descriptor in r:
+                if descriptor == stdout:
+                    line = proc.stdout.readline().decode('utf-8').strip()
+                    if re.match(r'^\d+$', line):
+                        job.progress = int(line)
+                        job.save()
+                    else:
+                        output += '{}\n'.format(line)
+
+                if descriptor == stderr:
+                    line = proc.stderr.readline().decode('utf-8').strip()
                     output += '{}\n'.format(line)
+
+            if proc.poll() is not None:
+                break
 
         logger.info(
             'background job finish - pid: {}, returncode: {}'.format(

@@ -67,7 +67,7 @@ def _dispatch_on_control_message(action, data):
             json_data[job.job_id] = job.json_data()
 
         logger.info('status reponse: {}'.format(json_data))
-        notify_job_status({'Jobs': json_data})
+        notify_job_status({'jobs': json_data})
         register_job_client()
     else:
         try:

@@ -31,7 +31,7 @@ class ScheduledJob(models.Model):
             self.report_start()
 
     def save(self, *args, **kwargs):
-        notify_job_status({'Jobs': {self.job_id: self.json_data()}})
+        notify_job_status({'jobs': {self.job_id: self.json_data()}})
         super(ScheduledJob, self).save(*args, **kwargs)
 
     def _save(self, *args, **kwargs):
@@ -42,13 +42,13 @@ class ScheduledJob(models.Model):
 
     def json_data(self):
         return {
-            'JobId': self.job_id,
-            'JobLabel': self.job_label,
-            'StartDate': localtime(self.start_date).isoformat() if (
+            'job_id': self.job_id,
+            'job_label': self.job_label,
+            'start_date': localtime(self.start_date).isoformat() if (
                 self.start_date is not None) else None,
-            'EndDate': localtime(self.end_date).isoformat() if (
+            'end_date': localtime(self.end_date).isoformat() if (
                 self.end_date is not None) else None,
-            'Progress': self.progress,
-            'ExitStatus': self.exit_status,
-            'ExitOutput': self.exit_output
+            'progress': self.progress,
+            'exit_status': self.exit_status,
+            'exit_output': self.exit_output
         }
