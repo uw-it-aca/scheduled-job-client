@@ -25,6 +25,11 @@ Project settings.py
 
 **Job Client App Settings**
 
+    # add Job Client to INSTALLED_APPS
+    INSTALLED_APPS += [
+        'scheduled_job_client.apps.ScheduledJobClientConfig',
+    ]
+
     # Job Client Configuration
     SCHEDULED_JOB_CLIENT = {
         'CLUSTER_NAME': '<app_cluster_name>',
@@ -44,7 +49,8 @@ Project settings.py
             'joblabel1': {
                 'title': '<an explanation for the label>',
                 'type': '<one of method, management_command, or shell>',
-                'action': '<method, management command or shell command to run>'
+                'action': '<method, management command or shell command to run>',
+                'arguments': [<array of arguments to action>]
             }
             #, ...
         }
