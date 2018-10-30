@@ -42,7 +42,7 @@ Project settings.py
             'TOPIC_ARN': '<aws_arn_for_job_control_sns>',
         },
         'STATUS': {
-            'TOPIC_ARN': '<aws_arn_for_job_sqs>',
+            'QUEUE_ARN': '<aws_arn_for_job_sqs>',
             'QUEUE_URL': '<url_for_aws_job_sqs>'
         },
         'JOBS': {

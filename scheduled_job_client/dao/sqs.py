@@ -3,6 +3,7 @@ from random import randint
 import boto3
 import json
 import logging
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -12,9 +13,25 @@ def job_client_update(message_action, json_data):
     """Send messages to the Scheduled Job Manager response queue
     """
     config = get_job_config()
+
+    # dig region, account and queue_name out of ARN
+    #     arn:aws:sqs:<region>:<account-id>:<queuename>
+    # defined at:
+    #     https://docs.aws.amazon.com/general/latest/
+    #         gr/aws-arns-and-namespaces.html
+    queue_arn = config.get('STATUS').get('QUEUE_ARN')
+    m = re.match(r'^arn:aws:sqs:'
+                 r'(?P<region>([a-z]{2}-[a-z]+-\d+|mock)):'
+                 r'(?P<account_id>\d+):'
+                 r'(?P<queue_name>[a-z\d\-\_\.]*)$',
+                 queue_arn, re.I)
+    if not m:
+        raise Exception('Invalid SQS ARN: {}'.format(queue_arn))
+
     sqs = boto3.client('sqs',
                        aws_access_key_id=config.get('KEY_ID'),
-                       aws_secret_access_key=config.get('KEY'))
+                       aws_secret_access_key=config.get('KEY'),
+                       region_name=m.group('region'))
     message = {
         'Message': {
             'Type': 'ScheduledJobMessage',

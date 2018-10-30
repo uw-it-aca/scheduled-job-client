@@ -2,6 +2,7 @@ from django.urls import reverse
 from scheduled_job_client import get_job_config
 from scheduled_job_client.exceptions import InvalidSubcriptionTopicArn
 import boto3
+import re
 import logging
 
 
@@ -12,6 +13,21 @@ def register_job_client_endpoint():
     """Subscribe to get Scheduled Job Manager control notifications
     """
     config = get_job_config()
+
+    # dig region, account and queue_name out of ARN
+    #     arn:aws:sqs:<region>:<account-id>:<queuename>
+    # defined at:
+    #     https://docs.aws.amazon.com/general/latest/
+    #         gr/aws-arns-and-namespaces.html
+    topic_arn = config.get('NOTIFICATION').get('TOPIC_ARN')
+    m = re.match(r'^arn:aws:sns:'
+                 r'(?P<region>([a-z]{2}-[a-z]+-\d+|mock)):'
+                 r'(?P<account_id>\d+):'
+                 r'(?P<topic_name>[a-z\d\-\_\.]*)$',
+                 topic_arn, re.I)
+    if not m:
+        raise Exception('Invalid SNS ARN: {}'.format(topic_arn))
+
     endpoint = '{0}{1}'.format(
         config.get('NOTIFICATION').get('ENDPOINT_BASE'),
         reverse('notification'))
@@ -20,7 +36,8 @@ def register_job_client_endpoint():
         endpoint, config.get('NOTIFICATION').get('TOPIC_ARN')))
     client = boto3.client('sns',
                           aws_access_key_id=config.get('KEY_ID'),
-                          aws_secret_access_key=config.get('KEY'))
+                          aws_secret_access_key=config.get('KEY'),
+                          region_name=m.group('region'))
     client.subscribe(
         TopicArn=config.get('NOTIFICATION').get('TOPIC_ARN'),
         Protocol=config.get('NOTIFICATION').get('PROTOCOL'),
