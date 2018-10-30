@@ -98,4 +98,3 @@ def _job_error(job, reason):
     job.exit_status = -1
     job.exit_output = reason
     job.save()
-    job.notify_job_finish()
