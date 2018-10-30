@@ -21,7 +21,7 @@ def get_control_message(mbody):
         action = control_message['Action']
         data = control_message['Data']
         try:
-            task = data['Task']
+            task = data['task']
             task_label = task['label']
             try:
                 # verify notification is for us
