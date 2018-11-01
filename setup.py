@@ -23,8 +23,8 @@ setup(
     author_email="aca-it@uw.edu",
     include_package_data=True,
     install_requires=[
-        'django-aws-message>=1.0.1,<1.1',
-        'boto3',
+        'django-aws-message>=0.2,<0.3',
+        'boto>=2.0,<3.0',
     ],
     license='Apache License, Version 2.0',
     description=('App to provide support for scheduled-job-manager'),

@@ -11,7 +11,7 @@ from scheduled_job_client.notification import (
 from scheduled_job_client.exceptions import (
     InvalidJobRequest, InvalidJobConfig,
     ScheduleJobClientNoOp, UnkownJobException)
-from aws_message.message import validate_message_body
+from aws_message.aws import SNS
 import json
 import os
 
@@ -27,8 +27,8 @@ class JobClient(View):
         try:
             mbody = json.loads(request.read())
             logger.debug('SNS body: {0}'.format(mbody))
-
-            validate_message_body(mbody)
+            sns = SNS(mbody)
+            sns.validate()
 
             if mbody['Type'] == 'SubscriptionConfirmation':
                 confirm_subscription(mbody['TopicArn'], mbody['Token'])

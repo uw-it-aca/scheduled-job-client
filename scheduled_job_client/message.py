@@ -1,8 +1,7 @@
 from scheduled_job_client import get_job_config
 from scheduled_job_client.exceptions import (
     InvalidJobRequest, ScheduleJobClientNoOp, UnkownJobException)
-from aws_message.message import SNSException
-from aws_message.message import extract_inner_message
+from aws_message.aws import SNS
 import logging
 
 
@@ -15,7 +14,11 @@ def get_control_message(mbody):
 
     try:
         job_config = get_job_config()
-        control_message = extract_inner_message(mbody)
+
+        sns = SNS(mbody)
+        sns.validate()
+        control_message = sns.extract()
+
         logger.debug('SNS Job Message: {0}'.format(control_message))
 
         action = control_message['Action']
