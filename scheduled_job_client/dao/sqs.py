@@ -1,5 +1,4 @@
 from scheduled_job_client import get_job_config
-from random import randint
 import boto3
 import json
 import logging
@@ -48,9 +47,6 @@ def job_client_update(message_action, json_data):
 
     response = sqs.send_message(
         QueueUrl=config.get('STATUS').get('QUEUE_URL'),
-        MessageDeduplicationId='ScheduledJobManager{0}'.format(
-            randint(1000000000, 9999999999)),
-        MessageGroupId='ScheduledJobManager',
         MessageBody=json.dumps(message)
     )
 
