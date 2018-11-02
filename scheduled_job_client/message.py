@@ -1,7 +1,7 @@
 from scheduled_job_client import get_job_config
 from scheduled_job_client.exceptions import (
     InvalidJobRequest, ScheduleJobClientNoOp, UnkownJobException)
-from aws_message.aws import SNS
+from aws_message.aws import SNS, SNSException
 import logging
 
 

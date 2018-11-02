@@ -4,7 +4,7 @@ from scheduled_job_client.notification import (
     notify_job_start, notify_job_status)
 from scheduled_job_client.job import start_background_job
 from django.db import models
-from django.utils.timezone import localtime
+from django.utils.timezone import localtime, now
 import threading
 
 # Models support local scheduled job instance
@@ -26,19 +26,16 @@ class ScheduledJob(models.Model):
 
     def launch(self):
         if self.pid is None:
-            threading.Thread(
-                target=start_background_job, args=(self,), daemon=True).start()
-            self.report_start()
+            thread = threading.Thread(
+                target=start_background_job, args=(self,))
+            thread.daemon = True
+            thread.start()
+            self.start_date = now()
+            self.save()
 
     def save(self, *args, **kwargs):
         notify_job_status({'jobs': {self.job_id: self.json_data()}})
         super(ScheduledJob, self).save(*args, **kwargs)
-
-    def _save(self, *args, **kwargs):
-        super(ScheduledJob, self).save(*args, **kwargs)
-
-    def report_start(self):
-        notify_job_start(self.json_data())
 
     def json_data(self):
         return {

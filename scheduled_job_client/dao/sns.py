@@ -1,9 +1,8 @@
-from django.conf import settings
 from django.urls import reverse
 from scheduled_job_client import get_job_config
 from scheduled_job_client.exceptions import InvalidSubcriptionTopicArn
-from boto.sns.connection import SNSConnection
 from boto.sns import connect_to_region
+from boto.exception import BotoServerError
 from aws_message.aws import SNSException
 from scheduled_job_client.dao import https_connection_factory
 import re
@@ -45,12 +44,14 @@ def confirm_subscription(topic_arn, token):
         connection = _sns_connection()
         connection.confirm_subscription(
             topic_arn, token, authenticate_on_unsubscribe=True)
-    except Exception as ex:
-        if (type(ex).__name__ == 'AuthorizationErrorException' and
-                'already confirmed' in '{0}'.format(ex)):
+    except BotoServerError as ex:
+        if 'already confirmed' in '{0}'.format(ex):
             logger.info('SNS subscription already confirmed')
         else:
             logger.exception('SNS confirm subscription: {0}'.format(ex))
+
+    except Exception as ex:
+        logger.exception('SNS confirm subscription: {0}'.format(ex))
 
 
 def _sns_connection():
