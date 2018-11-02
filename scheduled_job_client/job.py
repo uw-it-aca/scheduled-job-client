@@ -1,6 +1,6 @@
 # scheduled job management job manager
 from scheduled_job_client import get_job_config
-from datetime import datetime
+from django.utils.timezone import now
 from subprocess import Popen, PIPE
 import select
 import logging
@@ -37,14 +37,18 @@ def start_background_job(job):
             'background job: type: {}, command: {}, conf: {}'.format(
                 job_type, command, job_config))
 
-        proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
-        job.pid = proc.pid
-        job.start_date = datetime.now()
-        job.progress = 0
-        job.end_date = None
-        job.exit_status = None
-        job.exit_output = None
-        job.save()
+        try:
+            proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+            job.pid = proc.pid
+            job.start_date = now()
+            job.progress = 0
+            job.end_date = None
+            job.exit_status = None
+            job.exit_output = None
+            job.save()
+        except Exception as ex:
+            logger.exception('background job - Popen fail: {}'.format(ex))
+            return
 
         logger.info(
             'background job - pid: {}, type: {}, command: {}'.format(
@@ -76,7 +80,7 @@ def start_background_job(job):
                 proc.pid, proc.returncode))
 
         job.pid = None
-        job.end_date = datetime.now()
+        job.end_date = now()
         job.progress = 100
         job.exit_status = proc.returncode
         job.exit_output = output
@@ -93,7 +97,7 @@ def start_background_job(job):
 
 def _job_error(job, reason):
     logger.error(reason)
-    job.end_date = datetime.now()
+    job.end_date = now()
     job.progress = 0
     job.exit_status = -1
     job.exit_output = reason

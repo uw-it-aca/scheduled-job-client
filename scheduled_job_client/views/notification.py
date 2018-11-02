@@ -84,22 +84,27 @@ def _dispatch_on_control_message(action, data):
 
                 # if new job or restarting previous job
                 if created:
-                    # fresh job
+                    logger.debug('launch - fresh job, launching')
                     job.launch()
                 elif job.exit_status is not None:
-                    # finished job
+                    logger.debug('launch - finshed job, launching')
                     job.launch()
                 elif job.pid is not None:
                     # verify that it's running
                     try:
                         os.kill(job.pid, 0)
+                        logger.debug('launch - already running job')
+                        notify_job_status(
+                            {'jobs': {job.job_id: job.json_data()}})
                         return
                     except OSError:
                         job.pid = None
 
+                    logger.debug('launch - dead job, launching')
                     job.launch()
-
-                job.report_start()
+                else:
+                    logger.debug('launch - model but not launched, launching')
+                    job.launch()
             elif action == 'terminate':
                 try:
                     ScheduledJob.objects.get(
