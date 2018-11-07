@@ -1,8 +1,7 @@
 from scheduled_job_client import get_job_config
 from scheduled_job_client.exceptions import (
     InvalidJobRequest, ScheduleJobClientNoOp, UnkownJobException)
-from aws_message.message import SNSException
-from aws_message.message import extract_inner_message
+from aws_message.message import Message
 import logging
 
 
@@ -15,7 +14,10 @@ def get_control_message(mbody):
 
     try:
         job_config = get_job_config()
-        control_message = extract_inner_message(mbody)
+
+        message = Message(mbody)
+        message.validate()
+        control_message = message.extract()
         logger.debug('SNS Job Message: {0}'.format(control_message))
 
         action = control_message['Action']
@@ -39,7 +41,5 @@ def get_control_message(mbody):
         except KeyError:
             # broad cluster member control message
             return (action, data)
-    except SNSException as ex:
-        raise InvalidJobRequest('Invalid SNS Message: {0}'.format(ex))
     except KeyError:
         raise InvalidJobRequest('Missing Action or Data')

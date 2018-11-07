@@ -23,7 +23,7 @@ setup(
     author_email="aca-it@uw.edu",
     include_package_data=True,
     install_requires=[
-        'django-aws-message>=1.0.1,<1.1',
+        'django-aws-message>=1.5,<2.0',
         'boto3',
     ],
     license='Apache License, Version 2.0',
