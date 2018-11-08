@@ -5,6 +5,8 @@ from subprocess import Popen, PIPE
 import select
 import logging
 import traceback
+import os
+import sys
 import re
 
 
@@ -19,6 +21,7 @@ def start_background_job(job):
         job_action = job_config['action']
         job_args = ' '.join(map(lambda i: '{}'.format(i),
                                 job_config.get('arguments', [])))
+        job_cwd = job_config.get('cwd')
 
         if job_type == 'method':
             command = 'python manage.py run_method {} {}'.format(
@@ -38,7 +41,22 @@ def start_background_job(job):
                 job_type, command, job_config))
 
         try:
-            proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+            proc_env = os.environ.copy()
+            popen_args = {
+                'shell': True,
+                'env': proc_env,
+                'stdout': PIPE,
+                'stderr': PIPE
+            }
+
+            if job_cwd:
+                popen_args['cwd'] = job_cwd
+                proc_env['PYTHONPATH'] = os.path.join(
+                    job_cwd, 'lib/python{}.{}/site-packages'.format(
+                        sys.version_info.major, sys.version_info.minor))
+                proc_env['PATH'] = os.path.join(job_cwd, 'bin')
+
+            proc = Popen(command, **popen_args)
             job.pid = proc.pid
             job.start_date = now()
             job.progress = 0
@@ -59,6 +77,7 @@ def start_background_job(job):
         stderr = proc.stderr.fileno()
         while True:
             r, w, e = select.select([stdout, stderr], [], [])
+            line = ''
             for descriptor in r:
                 if descriptor == stdout:
                     line = proc.stdout.readline().decode('utf-8').strip()
@@ -72,7 +91,7 @@ def start_background_job(job):
                     line = proc.stderr.readline().decode('utf-8').strip()
                     output += '{}\n'.format(line)
 
-            if proc.poll() is not None:
+            if line == '' and proc.poll() is not None:
                 break
 
         logger.info(

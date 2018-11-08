@@ -15,7 +15,7 @@ def get_control_message(mbody):
     try:
         job_config = get_job_config()
 
-        message = Message(mbody)
+        message = Message(mbody, job_config)
         message.validate()
         control_message = message.extract()
         logger.debug('SNS Job Message: {0}'.format(control_message))
