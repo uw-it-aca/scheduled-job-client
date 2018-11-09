@@ -102,7 +102,7 @@ def start_background_job(job):
         job.end_date = now()
         job.progress = 100
         job.exit_status = proc.returncode
-        job.exit_output = output
+        job.exit_output = output.strip()
         job.save()
     except KeyError:
         _job_error(job, 'Broken job config for {}'.format(job.job_label))
