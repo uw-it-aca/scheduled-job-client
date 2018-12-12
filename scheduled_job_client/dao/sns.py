@@ -80,15 +80,24 @@ def unsubscribe_job_client_endpoint():
     """
     config = get_job_config()
     client = _get_client(config)
+    topic_arn = config.get('NOTIFICATION').get('TOPIC_ARN')
+    endpoint = '{0}{1}'.format(
+        config.get('NOTIFICATION').get('ENDPOINT_BASE'),
+        reverse('notification'))
 
-    SubscriptionArn = subscribe_job_client_endpoint()
-    try:
-        response = client.unsubscribe(
-            SubscriptionArn=SubscriptionArn
+    logger.info('SNS: unsubscribe endpoint {} from {}'.format(
+        endpoint, topic_arn))
+
+    import pdb; pdb.set_trace()
+    subscription_arn = None
+    response = client.list_subscriptions_by_topic(TopicArn=topic_arn)
+    for sub in response['Subscriptions']:
+        if sub['TopicArn'] == topic_arn and sub['Endpoint'] == endpoint:
+            subscription_arn = sub['SubscriptionArn']
+            break
+
+    if (subscription_arn is not None and
+            subscription_arn[:12] == 'arn:aws:sns:'):
+        client.unsubscribe(
+            SubscriptionArn=subscription_arn
         )
-    except Exception as ex:
-        if (type(ex).__name__ == 'InvalidParameterException' and
-                'pending confirmation' in '{0}'.format(ex)):
-            logger.info('SNS subscription already not subscribed')
-        else:
-            logger.exception('SNS unsubscribe: {0}'.format(ex))
