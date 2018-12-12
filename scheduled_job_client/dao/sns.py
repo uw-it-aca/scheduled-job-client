@@ -88,7 +88,6 @@ def unsubscribe_job_client_endpoint():
     logger.info('SNS: unsubscribe endpoint {} from {}'.format(
         endpoint, topic_arn))
 
-    import pdb; pdb.set_trace()
     subscription_arn = None
     response = client.list_subscriptions_by_topic(TopicArn=topic_arn)
     for sub in response['Subscriptions']:
