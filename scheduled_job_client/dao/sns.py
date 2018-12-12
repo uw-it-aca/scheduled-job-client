@@ -9,11 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def register_job_client_endpoint():
-    """Subscribe to get Scheduled Job Manager control notifications
-    """
-    config = get_job_config()
-
+def _get_client(config):
     # dig region, account and queue_name out of ARN
     #     arn:aws:sqs:<region>:<account-id>:<queuename>
     # defined at:
@@ -28,21 +24,31 @@ def register_job_client_endpoint():
     if not m:
         raise Exception('Invalid SNS ARN: {}'.format(topic_arn))
 
+    return boto3.client('sns',
+                        aws_access_key_id=config.get('KEY_ID'),
+                        aws_secret_access_key=config.get('KEY'),
+                        region_name=m.group('region'))
+
+
+def subscribe_job_client_endpoint():
+    """Subscribe to get Scheduled Job Manager control notifications
+    """
+    config = get_job_config()
+    client = _get_client(config)
     endpoint = '{0}{1}'.format(
         config.get('NOTIFICATION').get('ENDPOINT_BASE'),
         reverse('notification'))
 
     logger.info('SNS: subscribe endpoint {0} to {1}'.format(
         endpoint, config.get('NOTIFICATION').get('TOPIC_ARN')))
-    client = boto3.client('sns',
-                          aws_access_key_id=config.get('KEY_ID'),
-                          aws_secret_access_key=config.get('KEY'),
-                          region_name=m.group('region'))
-    client.subscribe(
+
+    response = client.subscribe(
         TopicArn=config.get('NOTIFICATION').get('TOPIC_ARN'),
         Protocol=config.get('NOTIFICATION').get('PROTOCOL'),
         Endpoint=endpoint,
         ReturnSubscriptionArn=True)
+
+    return response['SubscriptionArn']
 
 
 def confirm_subscription(topic_arn, token):
@@ -67,3 +73,22 @@ def confirm_subscription(topic_arn, token):
             logger.info('SNS subscription already confirmed')
         else:
             logger.exception('SNS confirm subscription: {0}'.format(ex))
+
+
+def unsubscribe_job_client_endpoint():
+    """Unsubscribe from Scheduled Job Manager control notifications
+    """
+    config = get_job_config()
+    client = _get_client(config)
+
+    SubscriptionArn = subscribe_job_client_endpoint()
+    try:
+        response = client.unsubscribe(
+            SubscriptionArn=SubscriptionArn
+        )
+    except Exception as ex:
+        if (type(ex).__name__ == 'InvalidParameterException' and
+                'pending confirmation' in '{0}'.format(ex)):
+            logger.info('SNS subscription already not subscribed')
+        else:
+            logger.exception('SNS unsubscribe: {0}'.format(ex))
