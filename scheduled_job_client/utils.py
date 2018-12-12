@@ -1,5 +1,7 @@
-from scheduled_job_client.dao.sns import register_job_client_endpoint
-from scheduled_job_client.notification import register_job_client
+from scheduled_job_client.dao.sns import (
+    register_job_client_endpoint, deregister_job_client_endpoint)
+from scheduled_job_client.notification import (
+    register_job_client, deregister_job_client)
 from scheduled_job_client.exceptions import InvalidJobConfig
 from logging import getLogger
 
@@ -18,3 +20,14 @@ def init_job_client():
         register_job_client()
     except InvalidJobConfig as ex:
         logger.error("Cannot initialize: {0}".format(ex))
+
+
+def deinit_job_client():
+    try:
+        logger.debug('Unsubscribe client endpoint')
+        deregister_job_client_endpoint()
+
+        logger.debug('deregister job client')
+        deregister_job_client()
+    except InvalidJobConfig as ex:
+        logger.error("Cannot deinitialize: {0}".format(ex))

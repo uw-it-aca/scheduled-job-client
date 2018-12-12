@@ -54,6 +54,36 @@ def confirm_subscription(topic_arn, token):
         logger.exception('SNS confirm subscription: {0}'.format(ex))
 
 
+def deregister_job_client_endpoint():
+    """Subscribe to get Scheduled Job Manager control notifications
+    """
+    config = get_job_config()
+    endpoint = '{0}{1}'.format(
+        config.get('NOTIFICATION').get('ENDPOINT_BASE'),
+        reverse('notification'))
+    topic_arn = config.get('NOTIFICATION').get('TOPIC_ARN')
+
+    logger.info('SNS: unsubscribe endpoint {0} to {1}'.format(
+        endpoint, topic_arn))
+
+    subscription_arn = None
+    try:
+        connection = _sns_connection()
+        return_value = connection.get_all_subscriptions()
+        response = return_value['ListSubscriptionsResponse']
+        result = response['ListSubscriptionsResult']
+        for sub in result['Subscriptions']:
+            if sub['TopicArn'] == topic_arn and sub['Endpoint'] == endpoint:
+                subscription_arn = sub['SubscriptionArn']
+                break
+    except KeyError:
+        pass
+
+    if (subscription_arn is not None and
+            subscription_arn[:12] == 'arn:aws:sns:'):
+        connection.unsubscribe(subscription_arn)
+
+
 def _sns_connection():
     config = get_job_config()
 

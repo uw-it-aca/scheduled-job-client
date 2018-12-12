@@ -12,6 +12,14 @@ def register_job_client():
     })
 
 
+def deregister_job_client():
+    """REMOVE: app cluster, member, and services
+    """
+    job_client_update('register', {
+        'job_list': []
+    })
+
+
 def notify_job_start(json_data):
     job_client_update('launch', json_data)
 
