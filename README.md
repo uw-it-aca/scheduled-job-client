@@ -55,3 +55,18 @@ Project settings.py
             #, ...
         }
     }
+
+Deployment
+----------
+
+**Project directory**
+
+To make jobs available to the Scheduled Job Manager, run:
+
+    $ cd [project]
+    $ ./manage.py register_job_client
+
+To remove server from Scheduled Job Manager, run:
+
+    $ cd [project]
+    $ ./manage.py deregister_job_client
